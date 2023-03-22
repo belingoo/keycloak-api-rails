@@ -7,8 +7,10 @@ module Keycloak
 
     def call(env)
       method = env["REQUEST_METHOD"]
-      path   = env["PATH_INFO"]
-      uri    = env["REQUEST_URI"]
+      path = env["PATH_INFO"]
+      uri = env["REQUEST_URI"]
+      assign_realm_id(env)
+      Rails.logger.info "Selected REALM #{self.realm_id}"
 
       if service.need_authentication?(method, path, env)
         logger.debug("Start authentication for #{method} : #{path}")
@@ -40,8 +42,27 @@ module Keycloak
       @app.call(env)
     end
 
+    def assign_realm_id(env)
+      domain = extract_realm_id(env["HTTP_HOST"]) # http://localhost:8100 , https://subdomain.domain.de
+      domain = domain.gsub("test-","")
+
+      self.realm_id = if domain == "localhost"
+                        "development"
+                      else
+                        domain.downcase
+                      end
+    end
+
+    def extract_realm_id(origin)
+      origin.match(/realm\/([a-z0-9A-Z-]+)/)[1]
+    rescue StandardError
+      "development"
+    end
+
+    attr_accessor :realm_id
+
     def service
-      Keycloak.service
+      Keycloak.service(realm_id)
     end
 
     def logger
@@ -49,7 +70,7 @@ module Keycloak
     end
 
     def config
-      Keycloak.config
+      Keycloak.config(realm_id)
     end
   end
 end

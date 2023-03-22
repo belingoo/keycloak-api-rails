@@ -1,16 +1,17 @@
 module Keycloak
   class Service
-    
-    def initialize(key_resolver)
-      @key_resolver                          = key_resolver
-      @skip_paths                            = Keycloak.config.skip_paths
-      @logger                                = Keycloak.config.logger
-      @token_expiration_tolerance_in_seconds = Keycloak.config.token_expiration_tolerance_in_seconds
+
+    def initialize(realm_id, key_resolver)
+      config = Keycloak.config(realm_id)
+      @key_resolver = key_resolver
+      @skip_paths = config.skip_paths
+      @logger = config.logger
+      @token_expiration_tolerance_in_seconds = config.token_expiration_tolerance_in_seconds
     end
 
     def decode_and_verify(token)
       unless token.nil? || token&.empty?
-        public_key    = @key_resolver.find_public_keys
+        public_key = @key_resolver.find_public_keys
         decoded_token = JSON::JWT.decode(token, public_key)
 
         unless expired?(decoded_token)
@@ -42,7 +43,7 @@ module Keycloak
 
     def should_skip?(method, path)
       method_symbol = method&.downcase&.to_sym
-      skip_paths    = @skip_paths[method_symbol]
+      skip_paths = @skip_paths[method_symbol]
       !skip_paths.nil? && !skip_paths.empty? && !skip_paths.find_index { |skip_path| skip_path.match(path) }.nil?
     end
 

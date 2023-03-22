@@ -20,27 +20,42 @@ module Keycloak
     yield @configuration ||= Keycloak::Configuration.new
   end
 
-  def self.config
-    @configuration
+  def self.config(realm_id)
+    if @configurations[realm_id].blank?
+      new_config = @configuration.dup
+      new_config.realm_id = realm_id
+      @configurations[realm_id] = new_config
+    end
+    @configurations[realm_id]
   end
 
-  def self.http_client
-    @http_client ||= Keycloak::HTTPClient.new(config)
+  def self.http_client(realm_id)
+    @http_clients[realm_id] ||= Keycloak::HTTPClient.new(config(realm_id))
   end
 
-  def self.public_key_resolver
-    @public_key_resolver ||= PublicKeyCachedResolver.from_configuration(http_client, config)
+  def self.public_key_resolver(realm_id)
+    @public_key_resolvers ||= {}
+    @public_key_resolvers[realm_id] ||= PublicKeyCachedResolver.from_configuration(
+      http_client(realm_id),
+      config(realm_id))
   end
 
-  def self.service
-    @service ||= Keycloak::Service.new(public_key_resolver)
+  def self.service(realm_id)
+    @services[realm_id] ||= Keycloak::Service.new(realm_id, public_key_resolver(realm_id))
   end
 
   def self.logger
-    config.logger
+    @configuration.logger
+  end
+
+  def self.init_variables
+    @services = {}
+    @configurations = {}
+    @http_clients = {}
   end
 
   def self.load_configuration
+    init_variables
     configure do |config|
       config.server_url                             = nil
       config.realm_id                               = nil

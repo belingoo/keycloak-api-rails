@@ -10,6 +10,7 @@ module Keycloak
     RESOURCE_ROLES_KEY           = "keycloak:resource_roles"
     TOKEN_KEY                    = "keycloak:token"
     QUERY_STRING_TOKEN_KEY       = "authorizationToken"
+    CURRENT_USER_USERNAME        = "keycloak:username"
 
     def self.current_user_id(env)
       env[CURRENT_USER_ID_KEY]
@@ -39,6 +40,14 @@ module Keycloak
       env[CURRENT_USER_EMAIL_KEY]
     end
 
+    def self.assign_current_username(env, token)
+      env[CURRENT_USER_USERNAME] = token["preferred_username"]
+    end
+
+    def self.current_username(env)
+      env[CURRENT_USER_USERNAME]
+    end
+
     def self.assign_current_user_email(env, token)
       env[CURRENT_USER_EMAIL_KEY] = token["email"]
     end
@@ -57,6 +66,14 @@ module Keycloak
 
     def self.assign_realm_roles(env, token)
       env[ROLES_KEY] = token.dig("realm_access", "roles")
+    end
+
+    # Has the User access to a specific role?
+    # @param [Hash] env
+    # @param [String] role
+    def self.access_to_role?(env, role)
+      roles = current_user_roles(env)
+      roles.empty? || roles.include?(role)
     end
 
     def self.current_resource_roles(env)
