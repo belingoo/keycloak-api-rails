@@ -43,20 +43,7 @@ module Keycloak
     end
 
     def assign_realm_id(env)
-      domain = extract_realm_id(env["HTTP_HOST"]) # http://localhost:8100 , https://subdomain.domain.de
-      domain = domain.gsub("test-","")
-
-      self.realm_id = if domain == "localhost"
-                        "development"
-                      else
-                        domain.downcase
-                      end
-    end
-
-    def extract_realm_id(origin)
-      origin.match(/realm\/([a-z0-9A-Z-]+)/)[1]
-    rescue StandardError
-      "development"
+      self.realm_id = env["HTTP_REALM"] || "development"
     end
 
     attr_accessor :realm_id
