@@ -9,7 +9,7 @@ module Keycloak
       method = env["REQUEST_METHOD"]
       path = env["PATH_INFO"]
       uri = env["REQUEST_URI"]
-      assign_realm_id(env)
+      assign_realm_id(uri, env)
       Rails.logger.info "Selected REALM #{self.realm_id}"
 
       if service.need_authentication?(method, path, env)
@@ -42,8 +42,8 @@ module Keycloak
       @app.call(env)
     end
 
-    def assign_realm_id(env)
-      self.realm_id = env["HTTP_REALM"] || "development"
+    def assign_realm_id(uri, env)
+      self.realm_id = extract_realm_from_token(uri, env)
     end
 
     attr_accessor :realm_id
@@ -58,6 +58,18 @@ module Keycloak
 
     def config
       Keycloak.config(realm_id)
+    end
+
+    private
+    def extract_realm_from_token(uri, env)
+      token = service.read_token(uri, env)
+
+      decoded_token = JWT.decode(token, nil, false)&.first
+      url = URI.parse(decoded_token['iss'])
+
+      return nil unless url.host.to_s == URI.parse(config.server_url).host.to_s
+
+      url.path.gsub('/realms/', '')
     end
   end
 end
