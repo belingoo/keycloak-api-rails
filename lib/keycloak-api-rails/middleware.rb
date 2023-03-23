@@ -9,10 +9,11 @@ module Keycloak
       method = env["REQUEST_METHOD"]
       path = env["PATH_INFO"]
       uri = env["REQUEST_URI"]
-      assign_realm_id(uri, env)
-      Rails.logger.info "Selected REALM #{self.realm_id}"
 
       if service.need_authentication?(method, path, env)
+        assign_realm_id(uri, env)
+        Rails.logger.info "Selected REALM #{self.realm_id}"
+
         logger.debug("Start authentication for #{method} : #{path}")
         token         = service.read_token(uri, env)
         decoded_token = service.decode_and_verify(token)
