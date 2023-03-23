@@ -65,6 +65,8 @@ module Keycloak
     def extract_realm_from_token(uri, env)
       token = service.read_token(uri, env)
 
+      return nil if token.blank?
+
       decoded_token = JWT.decode(token, nil, false)&.first
       url = URI.parse(decoded_token['iss'])
 
