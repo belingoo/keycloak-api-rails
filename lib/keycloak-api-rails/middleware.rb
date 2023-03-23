@@ -73,6 +73,8 @@ module Keycloak
       return nil unless url.host.to_s == URI.parse(config.server_url).host.to_s
 
       url.path.gsub('/realms/', '')
+    rescue JWT::DecodeError => e
+      raise TokenError.verification_failed(decoded_token, e)
     end
   end
 end
