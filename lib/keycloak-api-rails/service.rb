@@ -14,11 +14,11 @@ module Keycloak
         public_key = @key_resolver.find_public_keys
         decoded_token = JSON::JWT.decode(token, public_key)
 
-        unless expired?(decoded_token)
+        if expired?(decoded_token) && ENV.fetch('LOCAL_DEVELOPMENT', nil).nil?
+          raise TokenError.expired(token)
+        else
           decoded_token.verify!(public_key)
           decoded_token
-        else
-          raise TokenError.expired(token)
         end
       else
         raise TokenError.no_token(token)
