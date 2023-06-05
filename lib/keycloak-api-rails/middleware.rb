@@ -7,10 +7,10 @@ module Keycloak
 
     def call(env)
       method = env["REQUEST_METHOD"]
-      path = env["PATH_INFO"]
-      uri = env["REQUEST_URI"]
+      path   = env["PATH_INFO"]
+      uri    = env["REQUEST_URI"]
 
-      if service.need_authentication?(method, path, env)
+      if service.need_middleware_authentication?(method, path, env)
         assign_realm_id(uri, env)
         Rails.logger.info "Selected REALM #{self.realm_id}"
 
