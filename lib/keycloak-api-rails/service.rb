@@ -8,6 +8,7 @@ module Keycloak
       @opt_in = config.opt_in
       @logger = config.logger
       @token_expiration_tolerance_in_seconds = config.token_expiration_tolerance_in_seconds
+      @dev_mode = config.dev_mode
     end
 
     def decode_and_verify(token)
@@ -15,7 +16,7 @@ module Keycloak
         public_key    = @key_resolver.find_public_keys
         decoded_token = JSON::JWT.decode(token, public_key)
 
-        if expired?(decoded_token) && ENV.fetch('LOCAL_DEVELOPMENT', nil).nil?
+        if expired?(decoded_token) && (@dev_mode.nil? || @dev_mode == false)
           raise TokenError.expired(token)
         else
           decoded_token.verify!(public_key)

@@ -10,5 +10,6 @@ module Keycloak
     config_accessor :custom_attributes
     config_accessor :logger
     config_accessor :ca_certificate_file
+    config_accessor :dev_mode
   end
 end
